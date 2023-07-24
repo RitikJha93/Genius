@@ -10,10 +10,14 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import { Badge } from "./ui/badge";
-import { Check, Code, ImageIcon, MessageSquare, Music, VideoIcon, Zap } from "lucide-react";
+import { Check, Code, ImageIcon, Loader2Icon, MessageSquare, Music, VideoIcon, Zap } from "lucide-react";
 import { Card } from "./ui/card";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
+import { useEffect, useState } from "react";
+import { NextResponse } from "next/server";
+import axios from "axios";
+import Loader from "./Loader";
 
 const tools = [
   {
@@ -49,6 +53,30 @@ const tools = [
 ];
 const ProModal = () => {
   const proModal = useProModal();
+  const [mounted, setMounted] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  const onSubscribe = async() => {
+    try {
+        setLoading(true)
+
+        const {data} = await axios.get('/api/stripe')
+
+        window.location.href = data.url
+    } catch (error:any) {
+        console.log(error,'STRIPE_CLIENT_ERROR')
+    }finally{
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+  
+  if(!mounted){
+    return null
+  }
   return (
     <Dialog open={proModal.isOpen} onOpenChange={proModal.onClose}>
       <DialogContent>
@@ -83,10 +111,12 @@ const ProModal = () => {
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button className="w-full" size={'lg'} variant={'premium'}>
+          {
+            loading ? <Button className="w-full" size={'lg'} variant={'premium'}><Loader2Icon className="animate-spin w-6 h-6 text-center" /></Button> : <Button onClick={onSubscribe} className="w-full" size={'lg'} variant={'premium'}>
             Upgrade
             <Zap className="fill-white w-4 h-4 ml-2" />
           </Button>
+          }
         </DialogFooter>
       </DialogContent>
     </Dialog>
