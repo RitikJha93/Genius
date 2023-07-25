@@ -2,6 +2,7 @@ import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from "openai";
 import { NextResponse } from 'next/server'
 import { auth } from "@clerk/nextjs";
 import { checkApiLimit, increaseApiLimit } from "@/lib/api-limit";
+import { checkSubscription } from "@/lib/subscription";
 
 
 const configuration = new Configuration({
@@ -32,15 +33,17 @@ export async function POST(
             return new NextResponse("Messages are required", { status: 500 })
         }
         const freeTrial = await checkApiLimit()
-        if (!freeTrial) {
+        const isPro = await checkSubscription()
+        if (!freeTrial && !isPro) {
             return new NextResponse("Please upgrade to pro plan", { status: 403 })
-
         }
         const response = await openai.createChatCompletion({
             model: 'gpt-3.5-turbo',
             messages: [instructionMessage, ...messages]
         })
-        await increaseApiLimit()
+        if (!isPro) {
+            await increaseApiLimit()
+        }
         return NextResponse.json(response.data.choices[0].message)
 
     } catch (error) {

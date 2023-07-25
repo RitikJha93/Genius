@@ -2,6 +2,7 @@ import { Configuration, OpenAIApi } from "openai";
 import { NextResponse } from 'next/server'
 import { auth } from "@clerk/nextjs";
 import { checkApiLimit, increaseApiLimit } from "@/lib/api-limit";
+import { checkSubscription } from "@/lib/subscription";
 const configuration = new Configuration({
     apiKey: process.env.OPENAI_APIKEY,
 });
@@ -18,6 +19,7 @@ export async function POST(
 
 
         const freeTrial = await checkApiLimit()
+        const isPro = await checkSubscription()
         if (!userId) {
             return new NextResponse("Unathourized", { status: 401 })
         }
@@ -27,7 +29,7 @@ export async function POST(
         if (!messages) {
             return new NextResponse("Messages are required", { status: 500 })
         }
-        if (!freeTrial) {
+        if (!freeTrial && !isPro) {
             return new NextResponse("Please upgrade to pro plan to use Genius", { status: 403 })
         }
         const response = await openai.createChatCompletion({
@@ -35,7 +37,9 @@ export async function POST(
             messages
         })
 
-        await increaseApiLimit()
+        if (!isPro) {
+            await increaseApiLimit()
+        }
         return NextResponse.json(response.data.choices[0].message)
 
     } catch (error) {

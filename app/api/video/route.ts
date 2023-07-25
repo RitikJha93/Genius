@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from "@clerk/nextjs";
 import Replicate from "replicate";
 import { checkApiLimit, increaseApiLimit } from '@/lib/api-limit';
+import { checkSubscription } from '@/lib/subscription';
 
 const replicate = new Replicate({
     auth: process.env.REPLICATE_API_TOKEN!,
@@ -22,21 +23,23 @@ export async function POST(
             return new NextResponse("Music prompt is required", { status: 500 })
         }
         const freeTrial = await checkApiLimit()
-        if (!freeTrial) {
+        const isPro = await checkSubscription()
+        if (!freeTrial && !isPro) {
             return new NextResponse("Please upgrade to pro plan", { status: 403 })
 
         }
         const response = await replicate.run(
             "anotherjesse/zeroscope-v2-xl:9f747673945c62801b13b84701c783929c0ee784e4748ec062204894dda1a351",
             {
-              input: {
-                prompt: prompt
-              }
+                input: {
+                    prompt: prompt
+                }
             }
-          );
+        );
 
-        await increaseApiLimit()
-        return NextResponse.json(response)
+        if (!isPro) {
+            await increaseApiLimit()
+        } return NextResponse.json(response)
 
     } catch (error) {
         console.log("[VIDEO_ERROR]", error)
