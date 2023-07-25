@@ -14,6 +14,7 @@ import axios from "axios";
 import Empty from "@/components/Empty";
 import Loader from "@/components/Loader";
 import { useProModal } from "@/hooks/pro-modal";
+import { toast } from "react-hot-toast";
 
 const VideoPage = () => {
   const router = useRouter();
@@ -37,7 +38,9 @@ const VideoPage = () => {
       form.reset();
     } catch (error :any) {
       if(error?.response?.status === 403){
-        proModal.onOpen()
+        proModal.onOpen();
+      }else{
+        toast.error('something went wrong')
       }
       console.log(error);
     } finally {
