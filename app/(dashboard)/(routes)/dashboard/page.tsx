@@ -65,7 +65,7 @@ const DashboardPage = () => {
       <div className="px-4 md:px-20 lg:px-32 space-y-4">
         {tools.map((tool, i) => {
           return (
-            <Card onClick={()=>router.push(tool.href)} className="p-4 border-black/5 flex items-center justify-between hover:shadow-md transition cursor-pointer">
+            <Card key={i} onClick={()=>router.push(tool.href)} className="p-4 border-black/5 flex items-center justify-between hover:shadow-md transition cursor-pointer">
               <div className="flex items-center gap-x-4">
                 <div className={cn("w-fit p-2 rounded-md", tool.bgColor)}>
                   <tool.icon className={cn("w-8 h-8", tool.color)} />
